@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StreamZone Admin Panel</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+:root{
+  --ink:#07090f;--surface:#0d1117;--card:#111720;--card2:#161e2b;
+  --border:#1d2738;--accent:#e8232a;--accent2:#ff6b1a;
+  --blue:#2563eb;--green:#22c97a;--yellow:#f59e0b;
+  --text1:#f0f4ff;--text2:#8a9bbf;--text3:#3d4d6a;
+  --danger:#e8232a;--r:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:var(--ink);color:var(--text1);font-family:'Inter',sans-serif;}
+
+/* ── LOGIN ── */
+#loginWrap{
+  display:flex;align-items:center;justify-content:center;min-height:100vh;
+  background:radial-gradient(ellipse at 50% 30%,rgba(37,99,235,.12),transparent 65%),var(--ink);
+}
+.login-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:40px 36px;width:380px;
+}
+.login-logo{font-family:'Barlow Condensed',sans-serif;font-size:1.8rem;font-weight:800;margin-bottom:4px;}
+.login-logo span{color:var(--accent);}
+.login-sub{font-size:.82rem;color:var(--text2);margin-bottom:30px;}
+.fg{margin-bottom:15px;}
+.fg label{display:block;font-size:.77rem;font-weight:600;color:var(--text2);margin-bottom:5px;}
+.fg input,.fg select,.fg textarea{
+  width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;
+  color:var(--text1);padding:10px 13px;font-size:.88rem;outline:none;
+  transition:border-color .18s;font-family:inherit;
+}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--accent);}
+.fg textarea{resize:vertical;min-height:80px;}
+.fg select option{background:var(--card2);}
+.btn-primary{
+  width:100%;background:var(--accent);color:#fff;border:none;cursor:pointer;
+  padding:11px;border-radius:8px;font-size:.9rem;font-weight:700;transition:opacity .2s;
+}
+.btn-primary:hover{opacity:.86;}
+.login-hint{font-size:.72rem;color:var(--text3);margin-top:12px;text-align:center;}
+
+/* ── ADMIN SHELL ── */
+#adminWrap{display:none;height:100vh;flex-direction:column;}
+#adminWrap.open{display:flex;}
+
+/* header */
+.adm-header{
+  height:56px;background:rgba(7,9,15,.97);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;padding:0 22px;
+  position:sticky;top:0;z-index:100;flex-shrink:0;
+}
+.adm-logo{font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:800;}
+.adm-logo span{color:var(--accent);}
+.adm-badge{font-size:.68rem;background:rgba(232,35,42,.15);color:var(--accent);border:1px solid var(--accent);padding:2px 9px;border-radius:20px;font-weight:700;letter-spacing:.06em;margin-left:8px;}
+.adm-hr{display:flex;gap:8px;align-items:center;}
+.btn-sm{background:var(--card2);border:1px solid var(--border);color:var(--text2);padding:6px 13px;border-radius:7px;font-size:.78rem;cursor:pointer;text-decoration:none;transition:all .15s;}
+.btn-sm:hover{border-color:var(--text2);color:var(--text1);}
+.btn-danger-sm{background:rgba(232,35,42,.1);border:1px solid var(--danger);color:var(--danger);padding:6px 13px;border-radius:7px;font-size:.78rem;cursor:pointer;transition:all .15s;}
+.btn-danger-sm:hover{background:rgba(232,35,42,.2);}
+
+/* body */
+.adm-body{display:flex;flex:1;overflow:hidden;}
+
+/* sidebar nav */
+.adm-nav{
+  width:210px;background:var(--surface);border-right:1px solid var(--border);
+  padding:14px 8px;overflow-y:auto;flex-shrink:0;
+}
+.nav-section{font-size:.65rem;font-weight:700;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;padding:10px 10px 4px;}
+.nav-item{
+  display:flex;align-items:center;gap:9px;width:100%;background:none;border:none;
+  color:var(--text2);padding:9px 10px;border-radius:8px;cursor:pointer;font-size:.85rem;
+  text-align:left;transition:all .15s;margin-bottom:2px;
+}
+.nav-item:hover{background:var(--card);color:var(--text1);}
+.nav-item.active{background:rgba(232,35,42,.12);color:var(--accent);}
+
+/* main content */
+.adm-main{flex:1;overflow-y:auto;padding:26px 28px 60px;}
+.page{display:none;animation:fadeIn .2s;}
+.page.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+/* page titles */
+.page-title{font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:10px;}
+.page-title small{font-size:.9rem;font-weight:400;color:var(--text2);font-family:'Inter',sans-serif;}
+
+/* stat cards */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;}
+.stat-lbl{font-size:.68rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;}
+.stat-val{font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:700;margin-top:3px;}
+.stat-note{font-size:.72rem;color:var(--text3);margin-top:2px;}
+
+/* section heading */
+.sec-h{font-size:.72rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.09em;margin-bottom:12px;margin-top:22px;display:flex;align-items:center;gap:8px;}
+.sec-h::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* card box */
+.cbox{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px 22px;margin-bottom:18px;}
+
+/* table */
+.tbl-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;overflow-x:auto;}
+table{width:100%;border-collapse:collapse;min-width:700px;}
+thead th{background:var(--card2);color:var(--text2);font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;padding:11px 14px;text-align:left;white-space:nowrap;}
+tbody td{padding:11px 14px;border-top:1px solid var(--border);font-size:.85rem;vertical-align:middle;}
+tbody tr:hover td{background:var(--card2);}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.68rem;font-weight:700;}
+.b-news{background:rgba(37,99,235,.15);color:#60a5fa;}
+.b-sports{background:rgba(34,197,74,.12);color:#4ade80;}
+.b-cartoon{background:rgba(245,158,11,.12);color:#fbbf24;}
+.b-movies{background:rgba(168,85,247,.12);color:#c084fc;}
+.b-drama{background:rgba(236,72,153,.12);color:#f472b6;}
+.b-music{background:rgba(20,184,166,.12);color:#2dd4bf;}
+.url-cell{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2);font-size:.76rem;}
+.act-btn{background:none;border:1px solid var(--border);color:var(--text2);cursor:pointer;padding:4px 9px;border-radius:6px;font-size:.75rem;transition:all .14s;margin-right:3px;}
+.act-btn:hover{border-color:var(--blue);color:var(--blue);}
+.act-btn.del:hover{border-color:var(--danger);color:var(--danger);}
+
+/* form grid */
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:13px;}
+.fgrid .full{grid-column:1/-1;}
+.btn-green{background:var(--green);color:#000;border:none;cursor:pointer;padding:10px 22px;border-radius:8px;font-size:.9rem;font-weight:700;transition:opacity .2s;}
+.btn-green:hover{opacity:.86;}
+.btn-blue{background:var(--blue);color:#fff;border:none;cursor:pointer;padding:10px 22px;border-radius:8px;font-size:.9rem;font-weight:700;transition:opacity .2s;}
+.btn-blue:hover{opacity:.86;}
+
+/* import drop zone */
+.dropzone{
+  border:2px dashed var(--border);border-radius:var(--r);padding:40px;text-align:center;
+  cursor:pointer;transition:all .2s;background:var(--card2);
+}
+.dropzone:hover,.dropzone.dragover{border-color:var(--accent);background:rgba(232,35,42,.04);}
+.dropzone .dz-icon{font-size:2.8rem;margin-bottom:10px;}
+.dropzone p{font-size:.88rem;color:var(--text2);}
+.dropzone small{font-size:.75rem;color:var(--text3);}
+
+/* progress bar */
+.prog-wrap{margin-top:14px;display:none;}
+.prog-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:6px;}
+.prog-fill{height:100%;background:var(--accent);border-radius:3px;transition:width .3s;width:0%;}
+.prog-label{font-size:.78rem;color:var(--text2);}
+
+/* scan results */
+.scan-results{margin-top:16px;}
+.scan-item{
+  display:flex;align-items:center;gap:10px;padding:9px 12px;
+  border-radius:7px;background:var(--card2);margin-bottom:5px;font-size:.82rem;
+}
+.scan-item .si-status{font-size:1rem;width:20px;text-align:center;}
+.scan-item .si-name{flex:1;font-weight:500;}
+.scan-item .si-url{color:var(--text3);font-size:.73rem;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.scan-item .si-cat{font-size:.72rem;}
+
+/* profile */
+.profile-card{background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:28px;display:flex;align-items:center;gap:22px;margin-bottom:22px;}
+.avatar{width:72px;height:72px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:1.8rem;font-weight:800;font-family:'Barlow Condensed',sans-serif;color:#fff;flex-shrink:0;}
+.profile-info .name{font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:800;}
+.profile-info .role{font-size:.78rem;color:var(--accent);font-weight:600;margin-top:2px;}
+.profile-info .email{font-size:.8rem;color:var(--text2);margin-top:4px;}
+
+/* ad toggle */
+.ad-zone{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:10px;}
+.az-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.az-title{font-size:.88rem;font-weight:600;}
+.toggle{position:relative;display:inline-block;width:40px;height:22px;}
+.toggle input{opacity:0;width:0;height:0;}
+.slider{position:absolute;cursor:pointer;inset:0;background:var(--border);border-radius:22px;transition:.3s;}
+.slider:before{position:absolute;content:'';width:16px;height:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.3s;}
+input:checked+.slider{background:var(--accent);}
+input:checked+.slider:before{transform:translateX(18px);}
+
+/* toast */
+.toast{
+  position:fixed;bottom:26px;right:26px;
+  background:var(--card);border:1px solid var(--green);color:var(--green);
+  padding:10px 20px;border-radius:8px;font-size:.85rem;font-weight:500;
+  opacity:0;transform:translateY(8px);transition:all .28s;z-index:9999;pointer-events:none;
+}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.err{border-color:var(--danger);color:var(--danger);}
+
+/* scrollbar */
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px;}
+
+@media(max-width:800px){
+  .stats-row{grid-template-columns:1fr 1fr;}
+  .fgrid{grid-template-columns:1fr;}
+  .fgrid .full{grid-column:1;}
+  .adm-nav{width:160px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ───── LOGIN ───── -->
+<div id="loginWrap">
+  <div class="login-card">
+    <div class="login-logo">Stream<span>Zone</span></div>
+    <div class="login-sub">Admin Panel — Secure Sign In</div>
+    <div class="fg"><label>Username</label><input type="text" id="lu" value="admin" placeholder="admin"></div>
+    <div class="fg"><label>Password</label><input type="password" id="lp" value="admin123" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn-primary" onclick="doLogin()">Sign In to Admin</button>
+    <div class="login-hint">Default: <strong>admin</strong> / <strong>admin123</strong> — change in Profile</div>
+  </div>
+</div>
+
+<!-- ───── ADMIN SHELL ───── -->
+<div id="adminWrap">
+
+  <!-- Header -->
+  <div class="adm-header">
+    <div style="display:flex;align-items:center;">
+      <div class="adm-logo" id="adminLogo">Stream<span>Zone</span></div>
+      <span class="adm-badge">ADMIN</span>
+    </div>
+    <div class="adm-hr">
+      <a class="btn-sm" href="index.html" target="_blank">👁 View Site</a>
+      <button class="btn-danger-sm" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="adm-body">
+
+    <!-- Nav -->
+    <nav class="adm-nav">
+      <div class="nav-section">Main</div>
+      <button class="nav-item active" onclick="goPage('dashboard',this)">📊 Dashboard</button>
+      <button class="nav-item" onclick="goPage('channels',this)">📺 Channels</button>
+      <button class="nav-item" onclick="goPage('playlist',this)">📋 Playlist</button>
+      <div class="nav-section">Config</div>
+      <button class="nav-item" onclick="goPage('ads',this)">💰 Ad Settings</button>
+      <button class="nav-item" onclick="goPage('settings',this)">⚙️ Settings</button>
+      <button class="nav-item" onclick="goPage('profile',this)">👤 Profile</button>
+    </nav>
+
+    <!-- Main content -->
+    <div class="adm-main">
+
+      <!-- ── DASHBOARD ── -->
+      <div class="page active" id="page-dashboard">
+        <div class="page-title">📊 Dashboard</div>
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-lbl">Total Channels</div>
+            <div class="stat-val" id="ds-total">0</div>
+            <div class="stat-note">All categories</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" style="color:var(--green)" id="ds-active">0</div>
+            <div class="stat-lbl">Active Streams</div>
+            <div class="stat-note">Have stream URL</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" style="color:var(--yellow)" id="ds-nourl">0</div>
+            <div class="stat-lbl">No URL</div>
+            <div class="stat-note">Need stream URL</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" style="color:var(--accent2)" id="ds-cats">0</div>
+            <div class="stat-lbl">Categories</div>
+            <div class="stat-note">Genre groups</div>
+          </div>
+        </div>
+
+        <div class="sec-h">Category Breakdown</div>
+        <div class="cbox" id="dashBreakdown"></div>
+
+        <div class="sec-h">Quick Actions</div>
+        <div style="display:flex;gap:9px;flex-wrap:wrap;">
+          <button class="btn-sm" onclick="goPage('channels',document.querySelector('[onclick*=channels]'))">📺 Manage Channels</button>
+          <button class="btn-sm" onclick="goPage('playlist',document.querySelector('[onclick*=playlist]'))">📋 Import Playlist</button>
+          <button class="btn-sm" onclick="exportJSON()">⬇ Export JSON</button>
+          <button class="btn-danger-sm" onclick="resetDefault()">🔄 Reset to Defaults</button>
+        </div>
+      </div>
+
+      <!-- ── CHANNELS ── -->
+      <div class="page" id="page-channels">
+        <div class="page-title">📺 Manage Channels</div>
+
+        <!-- Add / Edit form -->
+        <div class="cbox" id="chFormBox">
+          <div style="font-size:.88rem;font-weight:600;margin-bottom:14px;" id="formTitle">➕ Add New Channel</div>
+          <input type="hidden" id="f-id">
+          <div class="fgrid">
+            <div class="fg"><label>Channel Name *</label><input type="text" id="f-name" placeholder="e.g. BBC News"></div>
+            <div class="fg"><label>Category *</label>
+              <select id="f-cat">
+                <option value="news">📰 News</option>
+                <option value="sports">⚽ Sports</option>
+                <option value="cartoon">🧸 Cartoon</option>
+                <option value="movies">🎬 Movies</option>
+                <option value="drama">🎭 Drama</option>
+                <option value="music">🎵 Music</option>
+              </select>
+            </div>
+            <div class="fg"><label>Icon / Emoji</label><input type="text" id="f-icon" placeholder="📺"></div>
+            <div class="fg"><label>Now Playing Label</label><input type="text" id="f-now" placeholder="Live Stream"></div>
+            <div class="fg full"><label>Stream URL (M3U8 / Embed URL)</label><input type="text" id="f-url" placeholder="https://example.com/stream.m3u8"></div>
+            <div class="fg full"><label>Logo Image URL (optional)</label><input type="text" id="f-logo" placeholder="https://example.com/logo.png"></div>
+          </div>
+          <div style="display:flex;gap:9px;margin-top:6px;">
+            <button class="btn-green" id="formSubmitBtn" onclick="submitChannel()">✓ Add Channel</button>
+            <button class="btn-sm" id="formCancelBtn" style="display:none" onclick="cancelEdit()">Cancel</button>
+          </div>
+        </div>
+
+        <!-- Filter row -->
+        <div style="display:flex;gap:9px;margin-bottom:12px;align-items:center;">
+          <input type="text" id="tblQ" placeholder="Search channels…" oninput="renderTable()"
+            style="background:var(--card2);border:1px solid var(--border);border-radius:7px;padding:7px 12px;color:var(--text1);font-size:.83rem;outline:none;width:200px;">
+          <select id="tblCat" onchange="renderTable()"
+            style="background:var(--card2);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text1);font-size:.83rem;outline:none;">
+            <option value="all">All Categories</option>
+            <option value="news">News</option><option value="sports">Sports</option>
+            <option value="cartoon">Cartoon</option><option value="movies">Movies</option>
+            <option value="drama">Drama</option><option value="music">Music</option>
+          </select>
+          <span style="font-size:.78rem;color:var(--text3);margin-left:auto;" id="tblCount"></span>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Icon</th><th>Name</th><th>Category</th><th>Now Playing</th><th>Stream URL</th><th>Actions</th></tr></thead>
+            <tbody id="tblBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── PLAYLIST ── -->
+      <div class="page" id="page-playlist">
+        <div class="page-title">📋 Playlist Manager <small>Upload M3U8 — auto-scan &amp; add active streams</small></div>
+
+        <!-- Upload zone -->
+        <div class="cbox">
+          <div class="dropzone" id="dropzone" onclick="document.getElementById('m3uFile').click()"
+            ondragover="event.preventDefault();this.classList.add('dragover')"
+            ondragleave="this.classList.remove('dragover')"
+            ondrop="handleDrop(event)">
+            <input type="file" id="m3uFile" accept=".m3u,.m3u8,.txt" style="display:none" onchange="handleFile(event)">
+            <div class="dz-icon">📂</div>
+            <p>Click or drag &amp; drop your M3U / M3U8 file here</p>
+            <small>Supported: .m3u, .m3u8, .txt — System will scan all links and add only active streams</small>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;margin:14px 0;">
+            <div style="flex:1;height:1px;background:var(--border)"></div>
+            <span style="font-size:.78rem;color:var(--text3)">OR PASTE URL / CONTENT</span>
+            <div style="flex:1;height:1px;background:var(--border)"></div>
+          </div>
+          <div class="fg"><label>Paste M3U8 URL or raw M3U content</label>
+            <textarea id="m3uPaste" rows="6" placeholder="#EXTM3U&#10;#EXTINF:-1 tvg-name=&quot;Channel&quot; group-title=&quot;news&quot;,Channel Name&#10;https://example.com/stream.m3u8"></textarea>
+          </div>
+          <div style="display:flex;gap:9px;margin-top:4px;flex-wrap:wrap;">
+            <button class="btn-blue" onclick="startScan()">🔍 Scan &amp; Import</button>
+            <button class="btn-sm" onclick="document.getElementById('m3uPaste').value='';clearScanUI()">Clear</button>
+          </div>
+
+          <!-- Progress -->
+          <div class="prog-wrap" id="progWrap">
+            <div class="prog-bar"><div class="prog-fill" id="progFill"></div></div>
+            <div class="prog-label" id="progLabel">Scanning…</div>
+          </div>
+        </div>
+
+        <!-- Scan results -->
+        <div id="scanResultsWrap" style="display:none;">
+          <div class="sec-h" id="scanResultsLabel">Scan Results</div>
+          <div style="display:flex;gap:9px;margin-bottom:10px;flex-wrap:wrap;" id="scanActions"></div>
+          <div class="scan-results" id="scanResults"></div>
+        </div>
+
+        <!-- Existing playlists -->
+        <div class="sec-h">Saved Playlists</div>
+        <div class="cbox" id="savedPlaylists">
+          <div style="color:var(--text3);font-size:.85rem;">No playlists saved yet. Import one above.</div>
+        </div>
+      </div>
+
+      <!-- ── ADS ── -->
+      <div class="page" id="page-ads">
+        <div class="page-title">💰 Ad Settings <small>Monetag / Google AdSense</small></div>
+
+        <div class="cbox">
+          <div class="fg"><label>Ad Network Publisher ID / Pub ID</label>
+            <input type="text" id="ad-pubid" placeholder="ca-pub-XXXXXXXXXXXXXXXXX or Monetag publisher ID"></div>
+          <div style="display:flex;gap:9px;margin-top:4px;">
+            <button class="btn-green" onclick="saveAdConfig()">💾 Save Ad Config</button>
+          </div>
+        </div>
+
+        <div class="sec-h">Ad Zones</div>
+
+        <!-- Top Banner -->
+        <div class="ad-zone">
+          <div class="az-head">
+            <div class="az-title">🔝 Top Banner Ad (728×90 Leaderboard)</div>
+            <label class="toggle"><input type="checkbox" id="az-top-en"><span class="slider"></span></label>
+          </div>
+          <div class="fg"><label>Ad Slot ID</label><input type="text" id="az-top-slot" placeholder="1234567890"></div>
+          <div class="fg"><label>Custom HTML/JS Code (paste Monetag or other ad code)</label>
+            <textarea id="az-top-code" rows="4" placeholder="<!-- Paste ad code here -->"></textarea>
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="ad-zone">
+          <div class="az-head">
+            <div class="az-title">📐 Sidebar Ad (300×250 Rectangle)</div>
+            <label class="toggle"><input type="checkbox" id="az-sb-en"><span class="slider"></span></label>
+          </div>
+          <div class="fg"><label>Ad Slot ID</label><input type="text" id="az-sb-slot" placeholder="1234567891"></div>
+          <div class="fg"><label>Custom HTML/JS Code</label>
+            <textarea id="az-sb-code" rows="4" placeholder="<!-- Paste ad code here -->"></textarea>
+          </div>
+        </div>
+
+        <!-- Mid Content -->
+        <div class="ad-zone">
+          <div class="az-head">
+            <div class="az-title">📄 Mid-Content Ad (728×90)</div>
+            <label class="toggle"><input type="checkbox" id="az-mid-en"><span class="slider"></span></label>
+          </div>
+          <div class="fg"><label>Ad Slot ID</label><input type="text" id="az-mid-slot" placeholder="1234567892"></div>
+          <div class="fg"><label>Custom HTML/JS Code</label>
+            <textarea id="az-mid-code" rows="4" placeholder="<!-- Paste ad code here -->"></textarea>
+          </div>
+        </div>
+
+        <!-- Player -->
+        <div class="ad-zone">
+          <div class="az-head">
+            <div class="az-title">▶ Below Player Ad (728×90)</div>
+            <label class="toggle"><input type="checkbox" id="az-pl-en"><span class="slider"></span></label>
+          </div>
+          <div class="fg"><label>Ad Slot ID</label><input type="text" id="az-pl-slot" placeholder="1234567893"></div>
+          <div class="fg"><label>Custom HTML/JS Code</label>
+            <textarea id="az-pl-code" rows="4" placeholder="<!-- Paste ad code here -->"></textarea>
+          </div>
+        </div>
+
+        <button class="btn-green" onclick="saveAdConfig()" style="margin-top:6px;">💾 Save All Ad Settings</button>
+      </div>
+
+      <!-- ── SETTINGS ── -->
+      <div class="page" id="page-settings">
+        <div class="page-title">⚙️ Site Settings</div>
+        <div class="cbox" style="max-width:500px;">
+          <div class="fg"><label>Site Name</label><input type="text" id="s-name" placeholder="StreamZone"></div>
+          <div class="fg"><label>Site Tagline</label><input type="text" id="s-tag" placeholder="Watch Live TV Free"></div>
+          <button class="btn-green" onclick="saveSiteSettings()">💾 Save Settings</button>
+        </div>
+
+        <div class="sec-h">Data Management</div>
+        <div class="cbox" style="max-width:500px;">
+          <p style="font-size:.84rem;color:var(--text2);margin-bottom:14px;">Export all channels as JSON backup, or import a JSON file.</p>
+          <div style="display:flex;gap:9px;flex-wrap:wrap;">
+            <button class="btn-sm" onclick="exportJSON()">⬇ Export JSON</button>
+            <button class="btn-sm" onclick="document.getElementById('jsonImportFile').click()">⬆ Import JSON</button>
+            <button class="btn-danger-sm" onclick="resetDefault()">🗑 Reset All Channels</button>
+          </div>
+          <input type="file" id="jsonImportFile" accept=".json" style="display:none" onchange="importJSON(event)">
+        </div>
+      </div>
+
+      <!-- ── PROFILE ── -->
+      <div class="page" id="page-profile">
+        <div class="page-title">👤 Admin Profile</div>
+        <div class="profile-card">
+          <div class="avatar" id="avatarEl">A</div>
+          <div class="profile-info">
+            <div class="name" id="profileName">Admin</div>
+            <div class="role">Super Administrator</div>
+            <div class="email" id="profileEmail">admin@streamzone.tv</div>
+          </div>
+        </div>
+
+        <div class="cbox" style="max-width:480px;">
+          <div style="font-size:.88rem;font-weight:600;margin-bottom:14px;">✏️ Edit Profile</div>
+          <div class="fgrid">
+            <div class="fg"><label>Display Name</label><input type="text" id="p-name" placeholder="Admin"></div>
+            <div class="fg"><label>Email</label><input type="email" id="p-email" placeholder="admin@streamzone.tv"></div>
+            <div class="fg"><label>New Username</label><input type="text" id="p-user" placeholder="admin"></div>
+            <div class="fg"><label>New Password</label><input type="password" id="p-pass" placeholder="Leave blank to keep current"></div>
+          </div>
+          <button class="btn-green" style="margin-top:4px" onclick="saveProfile()">💾 Save Profile</button>
+        </div>
+      </div>
+
+    </div><!-- /adm-main -->
+  </div><!-- /adm-body -->
+</div><!-- /adminWrap -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════
+//  DATA LAYER
+// ════════════════════════════════════════════
+const DEFAULT_CH=[
+  {id:1,name:'BBC News',cat:'news',icon:'🇬🇧',url:'https://vs-hls-push-ww-live.akamaized.net/x=4/i=urn:bbc:pmd:pid:bbc_news_channel_hd/pc_hd_abr_v2.m3u8',now:'World News Live',logo:''},
+  {id:2,name:'Al Jazeera',cat:'news',icon:'📡',url:'https://live-hls-web-aje.getaj.net/AJE/index.m3u8',now:'Breaking News',logo:''},
+  {id:3,name:'Sports HD',cat:'sports',icon:'⚽',url:'',now:'Live Match',logo:''},
+  {id:4,name:'ESPN Live',cat:'sports',icon:'🏆',url:'',now:'Sports Highlights',logo:''},
+  {id:5,name:'Cartoon Network',cat:'cartoon',icon:'🧸',url:'',now:'Tom & Jerry',logo:''},
+  {id:6,name:'Disney Channel',cat:'cartoon',icon:'🏰',url:'',now:'Mickey Mouse',logo:''},
+  {id:7,name:'Cinema Max',cat:'movies',icon:'🎬',url:'',now:'Action Night',logo:''},
+  {id:8,name:'Star Movies',cat:'movies',icon:'⭐',url:'',now:'Hollywood Hits',logo:''},
+  {id:9,name:'Star Plus',cat:'drama',icon:'🎭',url:'',now:'Evening Drama',logo:''},
+  {id:10,name:'Zee TV',cat:'drama',icon:'📺',url:'',now:'Popular Series',logo:''},
+  {id:11,name:'MTV',cat:'music',icon:'🎵',url:'',now:'Top 40',logo:''},
+  {id:12,name:'Music Asia',cat:'music',icon:'🎤',url:'',now:'Asian Hits',logo:''},
+];
+const DEFAULT_CREDS={user:'admin',pass:'admin123'};
+const CATS=['news','sports','cartoon','movies','drama','music'];
+const CAT_LABELS={news:'📰 News',sports:'⚽ Sports',cartoon:'🧸 Cartoon',movies:'🎬 Movies',drama:'🎭 Drama',music:'🎵 Music'};
+
+function getCh(){const s=localStorage.getItem('sz_channels');return s?JSON.parse(s):JSON.parse(JSON.stringify(DEFAULT_CH));}
+function saveCh(ch){localStorage.setItem('sz_channels',JSON.stringify(ch));}
+function getCreds(){const s=localStorage.getItem('sz_creds');return s?JSON.parse(s):DEFAULT_CREDS;}
+function getAds(){const s=localStorage.getItem('sz_ads');return s?JSON.parse(s):{enabled:false,pubId:'',top:{enabled:false,slot:'',code:''},sidebar:{enabled:false,slot:'',code:''},mid:{enabled:false,slot:'',code:''},player:{enabled:false,slot:'',code:''}};}
+function saveAds(a){localStorage.setItem('sz_ads',JSON.stringify(a));}
+function getSiteSettings(){const s=localStorage.getItem('sz_settings');return s?JSON.parse(s):{siteName:'StreamZone',tagline:'Watch Live TV Free'};}
+function getProfile(){const s=localStorage.getItem('sz_profile');return s?JSON.parse(s):{name:'Admin',email:'admin@streamzone.tv'};}
+function nextId(ch){return ch.length?Math.max(...ch.map(c=>c.id))+1:1;}
+
+// ════════════════════════════════════════════
+//  AUTH
+// ════════════════════════════════════════════
+function doLogin(){
+  const u=document.getElementById('lu').value.trim();
+  const p=document.getElementById('lp').value;
+  const c=getCreds();
+  if(u===c.user&&p===c.pass){
+    document.getElementById('loginWrap').style.display='none';
+    const aw=document.getElementById('adminWrap');
+    aw.style.display='flex';aw.classList.add('open');
+    loadAllUI();
+  } else toast('Invalid credentials','err');
+}
+function doLogout(){
+  document.getElementById('adminWrap').classList.remove('open');
+  document.getElementById('adminWrap').style.display='none';
+  document.getElementById('loginWrap').style.display='flex';
+}
+
+// ════════════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════════════
+function goPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(id==='dashboard')refreshDash();
+  if(id==='channels')renderTable();
+  if(id==='ads')loadAdUI();
+  if(id==='settings')loadSettingsUI();
+  if(id==='profile')loadProfileUI();
+  if(id==='playlist')renderSavedPlaylists();
+}
+
+function loadAllUI(){
+  refreshDash();loadAdUI();loadSettingsUI();loadProfileUI();renderSavedPlaylists();
+  const st=getSiteSettings();
+  const n=st.siteName||'StreamZone';
+  document.getElementById('adminLogo').innerHTML=n.slice(0,-2)+'<span>'+n.slice(-2)+'</span>';
+}
+
+// ════════════════════════════════════════════
+//  DASHBOARD
+// ════════════════════════════════════════════
+function refreshDash(){
+  const ch=getCh();
+  document.getElementById('ds-total').textContent=ch.length;
+  document.getElementById('ds-active').textContent=ch.filter(c=>c.url).length;
+  document.getElementById('ds-nourl').textContent=ch.filter(c=>!c.url).length;
+  const usedCats=[...new Set(ch.map(c=>c.cat))];
+  document.getElementById('ds-cats').textContent=usedCats.length;
+
+  const bd=document.getElementById('dashBreakdown');
+  if(!ch.length){bd.innerHTML='<div style="color:var(--text3);font-size:.84rem;">No channels.</div>';return;}
+  bd.innerHTML=CATS.map(cat=>{
+    const cnt=ch.filter(c=>c.cat===cat).length;
+    if(!cnt)return '';
+    const pct=Math.round(cnt/ch.length*100);
+    return `<div style="display:flex;align-items:center;gap:12px;margin-bottom:11px;">
+      <div style="width:120px;font-size:.82rem;color:var(--text2);">${CAT_LABELS[cat]||cat}</div>
+      <div style="flex:1;height:7px;background:var(--border);border-radius:3px;overflow:hidden;">
+        <div style="height:100%;width:${pct}%;background:var(--accent);border-radius:3px;"></div>
+      </div>
+      <div style="width:28px;text-align:right;font-size:.82rem;font-weight:600;">${cnt}</div>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════
+//  CHANNELS TABLE
+// ════════════════════════════════════════════
+function renderTable(){
+  const ch=getCh();
+  const q=(document.getElementById('tblQ')?.value||'').toLowerCase();
+  const cat=document.getElementById('tblCat')?.value||'all';
+  const filtered=ch.filter(c=>{
+    const mc=cat==='all'||c.cat===cat;
+    const mq=!q||c.name.toLowerCase().includes(q)||(c.now||'').toLowerCase().includes(q);
+    return mc&&mq;
+  });
+  document.getElementById('tblCount').textContent=`${filtered.length} of ${ch.length} channels`;
+  const tb=document.getElementById('tblBody');
+  if(!filtered.length){
+    tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:22px;">No channels found.</td></tr>';
+    return;
+  }
+  tb.innerHTML=filtered.map((c,i)=>`
+    <tr>
+      <td style="color:var(--text3)">${i+1}</td>
+      <td style="font-size:1.3rem">${c.icon||'📺'}</td>
+      <td style="font-weight:600">${esc(c.name)}</td>
+      <td><span class="badge b-${c.cat}">${CAT_LABELS[c.cat]||c.cat}</span></td>
+      <td style="color:var(--text2)">${esc(c.now||'')}</td>
+      <td class="url-cell" title="${esc(c.url||'')}">${c.url?'✅ '+esc(c.url):'⚠️ No URL'}</td>
+      <td>
+        <button class="act-btn" onclick="editCh(${c.id})">✏️ Edit</button>
+        <button class="act-btn del" onclick="deleteCh(${c.id})">🗑 Delete</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function submitChannel(){
+  const id=document.getElementById('f-id').value;
+  const name=document.getElementById('f-name').value.trim();
+  const cat=document.getElementById('f-cat').value;
+  const icon=document.getElementById('f-icon').value.trim()||'📺';
+  const now=document.getElementById('f-now').value.trim();
+  const url=document.getElementById('f-url').value.trim();
+  const logo=document.getElementById('f-logo').value.trim();
+  if(!name){toast('Channel name is required','err');return;}
+  const ch=getCh();
+  if(id){
+    const idx=ch.findIndex(c=>c.id===parseInt(id));
+    if(idx>=0)ch[idx]={...ch[idx],name,cat,icon,now,url,logo};
+    toast(`"${name}" updated`);
+  } else {
+    ch.push({id:nextId(ch),name,cat,icon,now,url,logo});
+    toast(`"${name}" added`);
+  }
+  saveCh(ch);
+  clearForm();
+  renderTable();
+  refreshDash();
+}
+
+function editCh(id){
+  const ch=getCh();
+  const c=ch.find(x=>x.id===id);
+  if(!c)return;
+  document.getElementById('f-id').value=c.id;
+  document.getElementById('f-name').value=c.name;
+  document.getElementById('f-cat').value=c.cat;
+  document.getElementById('f-icon').value=c.icon||'';
+  document.getElementById('f-now').value=c.now||'';
+  document.getElementById('f-url').value=c.url||'';
+  document.getElementById('f-logo').value=c.logo||'';
+  document.getElementById('formTitle').textContent='✏️ Edit Channel';
+  document.getElementById('formSubmitBtn').textContent='💾 Save Changes';
+  document.getElementById('formCancelBtn').style.display='inline-block';
+  document.getElementById('chFormBox').scrollIntoView({behavior:'smooth'});
+}
+
+function deleteCh(id){
+  const ch=getCh();
+  const c=ch.find(x=>x.id===id);
+  if(!c||!confirm(`Delete "${c.name}"?`))return;
+  saveCh(ch.filter(x=>x.id!==id));
+  renderTable();
+  refreshDash();
+  toast(`"${c.name}" deleted`);
+}
+
+function cancelEdit(){clearForm();}
+function clearForm(){
+  ['f-id','f-name','f-icon','f-now','f-url','f-logo'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-cat').value='news';
+  document.getElementById('formTitle').textContent='➕ Add New Channel';
+  document.getElementById('formSubmitBtn').textContent='✓ Add Channel';
+  document.getElementById('formCancelBtn').style.display='none';
+}
+
+// ════════════════════════════════════════════
+//  PLAYLIST — M3U SCAN & IMPORT
+// ════════════════════════════════════════════
+let scannedChannels=[];
+
+function handleFile(e){
+  const file=e.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{document.getElementById('m3uPaste').value=ev.target.result;};
+  reader.readAsText(file);
+  document.getElementById('dropzone').classList.remove('dragover');
+}
+function handleDrop(e){
+  e.preventDefault();
+  document.getElementById('dropzone').classList.remove('dragover');
+  const file=e.dataTransfer.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{document.getElementById('m3uPaste').value=ev.target.result;};
+  reader.readAsText(file);
+}
+
+async function startScan(){
+  const text=document.getElementById('m3uPaste').value.trim();
+  if(!text){toast('Paste or upload M3U content first','err');return;}
+
+  // Parse M3U
+  const parsed=parseM3U(text);
+  if(!parsed.length){toast('No channels found in this file','err');return;}
+
+  // Show progress
+  const pw=document.getElementById('progWrap');
+  pw.style.display='block';
+  document.getElementById('scanResultsWrap').style.display='none';
+  scannedChannels=[];
+
+  let done=0;
+  const active=[];
+  const failed=[];
+
+  for(const ch of parsed){
+    done++;
+    const pct=Math.round(done/parsed.length*100);
+    document.getElementById('progFill').style.width=pct+'%';
+    document.getElementById('progLabel').textContent=`Scanning ${done}/${parsed.length}: ${ch.name}`;
+
+    const ok=await checkStream(ch.url);
+    if(ok){
+      ch.status='active';
+      active.push(ch);
+    } else {
+      ch.status='failed';
+      failed.push(ch);
+    }
+    scannedChannels.push(ch);
+    await new Promise(r=>setTimeout(r,20));
+  }
+
+  document.getElementById('progLabel').textContent=`✅ Done — ${active.length} active, ${failed.length} failed out of ${parsed.length}`;
+  renderScanResults(active,failed);
+}
+
+function parseM3U(text){
+  const lines=text.split('\n');
+  const channels=[];
+  let info=null;
+  for(let i=0;i<lines.length;i++){
+    const line=lines[i].trim();
+    if(line.startsWith('#EXTINF')){
+      const nameM=line.match(/,(.+)$/);
+      const groupM=line.match(/group-title="([^"]+)"/i);
+      const tvgM=line.match(/tvg-name="([^"]+)"/i);
+      const logoM=line.match(/tvg-logo="([^"]+)"/i);
+      const cat=mapCat((groupM&&groupM[1])||'');
+      info={
+        name:(tvgM&&tvgM[1]||nameM&&nameM[1]||'Channel').trim(),
+        cat,
+        icon:iconForCat(cat),
+        now:'Live',
+        logo:(logoM&&logoM[1])||'',
+      };
+    } else if(line.startsWith('http')&&info){
+      info.url=line;
+      channels.push({...info});
+      info=null;
+    } else if(line&&!line.startsWith('#')&&info){
+      info=null;
+    }
+  }
+  return channels;
+}
+
+function mapCat(g){
+  const gl=g.toLowerCase();
+  if(gl.includes('news')||gl.includes('বাংলা')&&gl.includes('সংবাদ'))return 'news';
+  if(gl.includes('sport')||gl.includes('cricket')||gl.includes('football'))return 'sports';
+  if(gl.includes('cartoon')||gl.includes('kids')||gl.includes('children')||gl.includes('animation'))return 'cartoon';
+  if(gl.includes('movie')||gl.includes('cinema')||gl.includes('film'))return 'movies';
+  if(gl.includes('drama')||gl.includes('series')||gl.includes('soap'))return 'drama';
+  if(gl.includes('music')||gl.includes('mtv'))return 'music';
+  return 'news';
+}
+function iconForCat(c){return{news:'📰',sports:'⚽',cartoon:'🧸',movies:'🎬',drama:'🎭',music:'🎵'}[c]||'📺';}
+
+async function checkStream(url){
+  if(!url)return false;
+  // For HLS: try to fetch the manifest with a short timeout
+  try{
+    const ctrl=new AbortController();
+    const timer=setTimeout(()=>ctrl.abort(),5000);
+    const res=await fetch(url,{method:'HEAD',signal:ctrl.signal,mode:'no-cors'});
+    clearTimeout(timer);
+    return true; // no-cors doesn't give status, but if it doesn't throw it reached the server
+  }catch(e){
+    // Try GET for m3u8
+    try{
+      const ctrl2=new AbortController();
+      const timer2=setTimeout(()=>ctrl2.abort(),5000);
+      await fetch(url,{signal:ctrl2.signal,mode:'no-cors'});
+      clearTimeout(timer2);
+      return true;
+    }catch(e2){return false;}
+  }
+}
+
+function renderScanResults(active,failed){
+  const wrap=document.getElementById('scanResultsWrap');
+  wrap.style.display='block';
+  document.getElementById('scanResultsLabel').textContent=`Scan Results — ${active.length} Active, ${failed.length} Unavailable`;
+
+  const actions=document.getElementById('scanActions');
+  actions.innerHTML=`
+    <button class="btn-green" onclick="importActiveChannels()">✅ Add ${active.length} Active Channels</button>
+    <button class="btn-sm" onclick="importAllChannels()">Add All ${scannedChannels.length}</button>
+    <button class="btn-sm" style="color:var(--text3)" onclick="clearScanUI()">Clear</button>
+  `;
+
+  const results=document.getElementById('scanResults');
+  results.innerHTML=[...active,...failed].map(c=>`
+    <div class="scan-item">
+      <span class="si-status">${c.status==='active'?'✅':'❌'}</span>
+      <span class="si-name">${esc(c.name)}</span>
+      <span class="si-url" title="${esc(c.url||'')}">${esc(c.url||'No URL')}</span>
+      <span class="si-cat"><span class="badge b-${c.cat}">${CAT_LABELS[c.cat]||c.cat}</span></span>
+    </div>
+  `).join('');
+}
+
+function importActiveChannels(){
+  const active=scannedChannels.filter(c=>c.status==='active');
+  if(!active.length){toast('No active channels to import','err');return;}
+  addScannedChannels(active);
+}
+function importAllChannels(){
+  if(!scannedChannels.length){toast('Nothing to import','err');return;}
+  addScannedChannels(scannedChannels);
+}
+function addScannedChannels(list){
+  const ch=getCh();
+  let added=0;
+  list.forEach(c=>{
+    if(!ch.find(x=>x.url&&x.url===c.url)){
+      ch.push({id:nextId(ch),name:c.name,cat:c.cat,icon:c.icon,now:c.now||'Live',url:c.url,logo:c.logo||''});
+      added++;
+    }
+  });
+  saveCh(ch);
+  refreshDash();
+  toast(`${added} channel${added===1?'':'s'} added to the site`);
+  // Save playlist record
+  savePL(list);
+  renderSavedPlaylists();
+}
+
+function clearScanUI(){
+  document.getElementById('scanResultsWrap').style.display='none';
+  document.getElementById('progWrap').style.display='none';
+  document.getElementById('progFill').style.width='0%';
+  scannedChannels=[];
+}
+
+// saved playlists
+function savePL(channels){
+  const pls=JSON.parse(localStorage.getItem('sz_playlists')||'[]');
+  pls.unshift({id:Date.now(),date:new Date().toLocaleString(),count:channels.length,active:channels.filter(c=>c.status==='active').length});
+  if(pls.length>20)pls.pop();
+  localStorage.setItem('sz_playlists',JSON.stringify(pls));
+}
+function renderSavedPlaylists(){
+  const pls=JSON.parse(localStorage.getItem('sz_playlists')||'[]');
+  const el=document.getElementById('savedPlaylists');
+  if(!pls.length){el.innerHTML='<div style="color:var(--text3);font-size:.84rem;">No playlists imported yet.</div>';return;}
+  el.innerHTML=`<table style="width:100%;border-collapse:collapse;">
+    <thead><tr>
+      <th style="padding:8px 10px;text-align:left;color:var(--text2);font-size:.72rem;text-transform:uppercase;">#</th>
+      <th style="padding:8px 10px;text-align:left;color:var(--text2);font-size:.72rem;text-transform:uppercase;">Date</th>
+      <th style="padding:8px 10px;text-align:left;color:var(--text2);font-size:.72rem;text-transform:uppercase;">Total</th>
+      <th style="padding:8px 10px;text-align:left;color:var(--text2);font-size:.72rem;text-transform:uppercase;">Active</th>
+    </tr></thead>
+    <tbody>
+    ${pls.map((p,i)=>`<tr style="border-top:1px solid var(--border);">
+      <td style="padding:9px 10px;color:var(--text3)">${i+1}</td>
+      <td style="padding:9px 10px;font-size:.82rem">${esc(p.date)}</td>
+      <td style="padding:9px 10px">${p.count}</td>
+      <td style="padding:9px 10px;color:var(--green)">${p.active}</td>
+    </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+// ════════════════════════════════════════════
+//  ADS
+// ════════════════════════════════════════════
+function loadAdUI(){
+  const a=getAds();
+  document.getElementById('ad-pubid').value=a.pubId||'';
+  document.getElementById('az-top-en').checked=a.top?.enabled||false;
+  document.getElementById('az-top-slot').value=a.top?.slot||'';
+  document.getElementById('az-top-code').value=a.top?.code||'';
+  document.getElementById('az-sb-en').checked=a.sidebar?.enabled||false;
+  document.getElementById('az-sb-slot').value=a.sidebar?.slot||'';
+  document.getElementById('az-sb-code').value=a.sidebar?.code||'';
+  document.getElementById('az-mid-en').checked=a.mid?.enabled||false;
+  document.getElementById('az-mid-slot').value=a.mid?.slot||'';
+  document.getElementById('az-mid-code').value=a.mid?.code||'';
+  document.getElementById('az-pl-en').checked=a.player?.enabled||false;
+  document.getElementById('az-pl-slot').value=a.player?.slot||'';
+  document.getElementById('az-pl-code').value=a.player?.code||'';
+}
+function saveAdConfig(){
+  const a={
+    pubId:document.getElementById('ad-pubid').value.trim(),
+    top:{enabled:document.getElementById('az-top-en').checked,slot:document.getElementById('az-top-slot').value.trim(),code:document.getElementById('az-top-code').value.trim()},
+    sidebar:{enabled:document.getElementById('az-sb-en').checked,slot:document.getElementById('az-sb-slot').value.trim(),code:document.getElementById('az-sb-code').value.trim()},
+    mid:{enabled:document.getElementById('az-mid-en').checked,slot:document.getElementById('az-mid-slot').value.trim(),code:document.getElementById('az-mid-code').value.trim()},
+    player:{enabled:document.getElementById('az-pl-en').checked,slot:document.getElementById('az-pl-slot').value.trim(),code:document.getElementById('az-pl-code').value.trim()},
+  };
+  saveAds(a);
+  toast('Ad settings saved — reload site to apply');
+}
+
+// ════════════════════════════════════════════
+//  SETTINGS
+// ════════════════════════════════════════════
+function loadSettingsUI(){
+  const s=getSiteSettings();
+  document.getElementById('s-name').value=s.siteName||'StreamZone';
+  document.getElementById('s-tag').value=s.tagline||'';
+}
+function saveSiteSettings(){
+  const s={siteName:document.getElementById('s-name').value.trim()||'StreamZone',tagline:document.getElementById('s-tag').value.trim()};
+  localStorage.setItem('sz_settings',JSON.stringify(s));
+  const n=s.siteName;
+  document.getElementById('adminLogo').innerHTML=n.slice(0,-2)+'<span>'+n.slice(-2)+'</span>';
+  toast('Site settings saved');
+}
+
+// ════════════════════════════════════════════
+//  PROFILE
+// ════════════════════════════════════════════
+function loadProfileUI(){
+  const p=getProfile();
+  const c=getCreds();
+  document.getElementById('profileName').textContent=p.name||'Admin';
+  document.getElementById('profileEmail').textContent=p.email||'admin@streamzone.tv';
+  document.getElementById('avatarEl').textContent=(p.name||'A')[0].toUpperCase();
+  document.getElementById('p-name').value=p.name||'';
+  document.getElementById('p-email').value=p.email||'';
+  document.getElementById('p-user').value=c.user||'admin';
+}
+function saveProfile(){
+  const name=document.getElementById('p-name').value.trim()||'Admin';
+  const email=document.getElementById('p-email').value.trim();
+  const user=document.getElementById('p-user').value.trim()||'admin';
+  const pass=document.getElementById('p-pass').value;
+  const curCreds=getCreds();
+  localStorage.setItem('sz_profile',JSON.stringify({name,email}));
+  localStorage.setItem('sz_creds',JSON.stringify({user,pass:pass||curCreds.pass}));
+  document.getElementById('profileName').textContent=name;
+  document.getElementById('profileEmail').textContent=email;
+  document.getElementById('avatarEl').textContent=name[0].toUpperCase();
+  document.getElementById('p-pass').value='';
+  toast('Profile saved');
+}
+
+// ════════════════════════════════════════════
+//  EXPORT / IMPORT / RESET
+// ════════════════════════════════════════════
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(getCh(),null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='streamzone-channels.json';
+  a.click();
+}
+function importJSON(e){
+  const file=e.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const data=JSON.parse(ev.target.result);
+      if(!Array.isArray(data))throw new Error('Not array');
+      saveCh(data);
+      renderTable();refreshDash();
+      toast(data.length+' channels imported');
+    }catch{toast('Invalid JSON file','err');}
+  };
+  reader.readAsText(file);
+}
+function resetDefault(){
+  if(!confirm('Reset all channels to defaults?'))return;
+  localStorage.removeItem('sz_channels');
+  renderTable();refreshDash();
+  toast('Channels reset to defaults');
+}
+
+// ════════════════════════════════════════════
+//  UTILS
+// ════════════════════════════════════════════
+function toast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast show'+(type?' '+type:'');
+  setTimeout(()=>t.className='toast',2800);
+}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+</script>
+</body>
+</html>

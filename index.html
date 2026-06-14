@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="siteTitle">StreamZone — Live TV</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+:root{
+  --ink:#07090f;--surface:#0d1117;--card:#111720;--card2:#161e2b;
+  --border:#1d2738;--accent:#e8232a;--accent2:#ff6b1a;
+  --blue:#2563eb;--text1:#f0f4ff;--text2:#8a9bbf;--text3:#3d4d6a;
+  --live:#e8232a;--r:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:var(--ink);color:var(--text1);font-family:'Inter',sans-serif;overflow-x:hidden;}
+a{text-decoration:none;color:inherit;}
+
+/* ── TOP BAR ── */
+.topbar{
+  position:fixed;top:0;left:0;right:0;z-index:200;
+  height:58px;background:rgba(7,9,15,.97);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;padding:0 20px;
+  backdrop-filter:blur(14px);
+}
+.logo{font-family:'Barlow Condensed',sans-serif;font-size:1.6rem;font-weight:800;letter-spacing:.01em;color:var(--text1);}
+.logo span{color:var(--accent);}
+.nav-tabs{display:flex;gap:2px;}
+.tab{
+  background:none;border:none;color:var(--text2);cursor:pointer;
+  padding:6px 14px;border-radius:7px;font-size:.82rem;font-weight:500;transition:all .18s;
+}
+.tab:hover,.tab.on{background:var(--card);color:var(--text1);}
+.tab.on{box-shadow:inset 0 -2px 0 var(--accent);}
+.topbar-right{display:flex;gap:8px;align-items:center;}
+.live-indicator{display:flex;align-items:center;gap:6px;font-size:.75rem;font-weight:700;color:var(--live);letter-spacing:.06em;}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--live);animation:blink 1.4s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+.btn-admin-link{
+  background:var(--card2);border:1px solid var(--border);color:var(--text2);
+  padding:6px 13px;border-radius:7px;font-size:.78rem;font-weight:600;cursor:pointer;
+  transition:all .18s;
+}
+.btn-admin-link:hover{border-color:var(--accent);color:var(--text1);}
+
+/* ── AD BANNER ── */
+.ad-banner{
+  margin:68px 0 0;background:var(--card2);border-bottom:1px solid var(--border);
+  min-height:90px;display:flex;align-items:center;justify-content:center;
+  overflow:hidden;
+}
+.ad-banner.hidden{display:none;}
+
+/* ── LAYOUT ── */
+.site-wrap{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 58px);margin-top:0;}
+.has-top-ad .site-wrap{margin-top:90px;}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  background:var(--surface);border-right:1px solid var(--border);
+  position:sticky;top:58px;height:calc(100vh - 58px);overflow-y:auto;
+  padding:14px 8px;
+}
+.sidebar-section{
+  font-size:.68rem;font-weight:700;color:var(--text3);letter-spacing:.1em;
+  text-transform:uppercase;padding:10px 10px 4px;
+}
+.cat-row{
+  display:flex;align-items:center;gap:9px;width:100%;background:none;border:none;
+  color:var(--text2);padding:9px 10px;border-radius:8px;cursor:pointer;font-size:.86rem;
+  text-align:left;transition:all .15s;
+}
+.cat-row:hover{background:var(--card);color:var(--text1);}
+.cat-row.active{background:rgba(232,35,42,.12);color:var(--accent);}
+.cat-row .ci{font-size:1.1rem;width:22px;text-align:center;}
+.cat-row .cc{margin-left:auto;font-size:.7rem;background:var(--border);color:var(--text2);padding:2px 7px;border-radius:12px;}
+.sidebar-ad{margin:12px 6px 0;border-radius:8px;overflow:hidden;min-height:250px;background:var(--card2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;}
+
+/* ── MAIN ── */
+main{overflow-y:auto;padding:20px 22px 40px;}
+
+/* search row */
+.search-row{display:flex;gap:10px;margin-bottom:18px;}
+.searchbox{
+  flex:1;display:flex;align-items:center;gap:8px;
+  background:var(--card);border:1px solid var(--border);border-radius:8px;padding:0 14px;height:42px;
+}
+.searchbox input{background:none;border:none;outline:none;color:var(--text1);font-size:.9rem;flex:1;}
+.searchbox input::placeholder{color:var(--text3);}
+
+/* hero */
+.hero{
+  border-radius:var(--r);overflow:hidden;position:relative;
+  background:linear-gradient(135deg,#0a1428,#0d0a1e);
+  border:1px solid var(--border);margin-bottom:22px;min-height:200px;
+  display:flex;align-items:flex-end;padding:24px;
+}
+.hero-glow{position:absolute;inset:0;background:radial-gradient(ellipse at 65% 35%,rgba(37,99,235,.2),transparent 60%);}
+.hero-badge{
+  position:absolute;top:16px;left:16px;
+  background:var(--live);color:#fff;font-size:.68rem;font-weight:800;
+  padding:3px 10px;border-radius:20px;letter-spacing:.08em;animation:blink 1.4s infinite;
+}
+.hero-info{position:relative;z-index:1;max-width:65%;}
+.hero-cat{font-size:.72rem;font-weight:700;color:var(--accent2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;}
+.hero-title{font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:800;line-height:1.1;margin-bottom:6px;}
+.hero-desc{font-size:.82rem;color:var(--text2);}
+.btn-watch{
+  margin-top:14px;display:inline-flex;align-items:center;gap:8px;
+  background:var(--accent);color:#fff;border:none;cursor:pointer;
+  padding:10px 22px;border-radius:8px;font-size:.88rem;font-weight:700;transition:opacity .2s;
+}
+.btn-watch:hover{opacity:.85;}
+
+/* section label */
+.sec-label{
+  font-size:.7rem;font-weight:700;color:var(--text3);text-transform:uppercase;
+  letter-spacing:.1em;margin-bottom:12px;display:flex;align-items:center;gap:8px;
+}
+.sec-label::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* channel grid */
+.ch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:11px;margin-bottom:26px;}
+.ch-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+  overflow:hidden;cursor:pointer;transition:all .2s;position:relative;
+}
+.ch-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.5);}
+.ch-card.now-playing{border-color:var(--accent);box-shadow:0 0 0 2px rgba(232,35,42,.25);}
+.ch-thumb{
+  width:100%;aspect-ratio:16/9;background:var(--card2);
+  display:flex;align-items:center;justify-content:center;font-size:2.4rem;
+  position:relative;overflow:hidden;
+}
+.ch-thumb img{width:100%;height:100%;object-fit:cover;}
+.live-pip{
+  position:absolute;top:7px;right:7px;
+  background:var(--live);color:#fff;font-size:.6rem;font-weight:800;
+  padding:2px 7px;border-radius:12px;letter-spacing:.06em;
+}
+.ch-body{padding:9px 11px 11px;}
+.ch-name{font-size:.85rem;font-weight:600;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ch-now{font-size:.72rem;color:var(--text2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* mid ad */
+.mid-ad{
+  margin:6px 0 22px;border-radius:var(--r);overflow:hidden;
+  min-height:90px;background:var(--card2);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+}
+.mid-ad.hidden{display:none;}
+
+/* ── PLAYER OVERLAY ── */
+.overlay{
+  display:none;position:fixed;inset:0;z-index:500;
+  background:rgba(0,0,0,.9);align-items:center;justify-content:center;
+}
+.overlay.open{display:flex;}
+.player-wrap{width:min(900px,95vw);}
+.player-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.player-ch-name{font-family:'Barlow Condensed',sans-serif;font-size:1.25rem;font-weight:800;}
+.btn-close-player{
+  background:var(--card2);border:1px solid var(--border);color:var(--text2);
+  padding:6px 13px;border-radius:7px;font-size:.8rem;cursor:pointer;transition:all .15s;
+}
+.btn-close-player:hover{border-color:var(--accent);color:var(--text1);}
+.player-box{
+  width:100%;aspect-ratio:16/9;background:#000;border-radius:var(--r);
+  border:1px solid var(--border);overflow:hidden;position:relative;
+  display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:2.5rem;
+}
+.player-box video,.player-box iframe{position:absolute;inset:0;width:100%;height:100%;border:none;}
+.player-below-ad{margin-top:10px;border-radius:8px;overflow:hidden;min-height:70px;background:var(--card2);display:flex;align-items:center;justify-content:center;}
+.player-below-ad.hidden{display:none;}
+.player-note{font-size:.78rem;color:var(--text3);text-align:center;margin-top:8px;}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(60px);
+  background:var(--card);border:1px solid var(--accent);color:var(--text1);
+  padding:10px 20px;border-radius:8px;font-size:.85rem;font-weight:500;
+  transition:transform .28s;z-index:900;pointer-events:none;white-space:nowrap;
+}
+.toast.show{transform:translateX(-50%) translateY(0);}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:700px){
+  .site-wrap{grid-template-columns:1fr;}
+  .sidebar{display:none;}
+  .nav-tabs{display:none;}
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <a class="logo" href="index.html" id="logoText">Stream<span>Zone</span></a>
+  <div class="nav-tabs">
+    <button class="tab on" onclick="filterCat('all',this)">All</button>
+    <button class="tab" onclick="filterCat('news',this)">📰 News</button>
+    <button class="tab" onclick="filterCat('sports',this)">⚽ Sports</button>
+    <button class="tab" onclick="filterCat('cartoon',this)">🧸 Cartoons</button>
+    <button class="tab" onclick="filterCat('movies',this)">🎬 Movies</button>
+    <button class="tab" onclick="filterCat('drama',this)">🎭 Drama</button>
+    <button class="tab" onclick="filterCat('music',this)">🎵 Music</button>
+  </div>
+  <div class="topbar-right">
+    <div class="live-indicator"><div class="live-dot"></div>LIVE</div>
+    <a class="btn-admin-link" href="admin.html">⚙ Admin</a>
+  </div>
+</div>
+
+<!-- TOP AD BANNER -->
+<div class="ad-banner" id="adTop"></div>
+
+<div class="site-wrap" id="siteWrap">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section">Categories</div>
+    <button class="cat-row active" onclick="filterCat('all',this)"><span class="ci">📺</span>All Channels<span class="cc" id="sc-all">0</span></button>
+    <button class="cat-row" onclick="filterCat('news',this)"><span class="ci">📰</span>News<span class="cc" id="sc-news">0</span></button>
+    <button class="cat-row" onclick="filterCat('sports',this)"><span class="ci">⚽</span>Sports<span class="cc" id="sc-sports">0</span></button>
+    <button class="cat-row" onclick="filterCat('cartoon',this)"><span class="ci">🧸</span>Cartoons<span class="cc" id="sc-cartoon">0</span></button>
+    <button class="cat-row" onclick="filterCat('movies',this)"><span class="ci">🎬</span>Movies<span class="cc" id="sc-movies">0</span></button>
+    <button class="cat-row" onclick="filterCat('drama',this)"><span class="ci">🎭</span>Drama<span class="cc" id="sc-drama">0</span></button>
+    <button class="cat-row" onclick="filterCat('music',this)"><span class="ci">🎵</span>Music<span class="cc" id="sc-music">0</span></button>
+    <div class="sidebar-section" style="margin-top:16px;">Sidebar Ad</div>
+    <div class="sidebar-ad" id="adSidebar"></div>
+  </aside>
+
+  <main>
+    <div class="search-row">
+      <div class="searchbox">
+        <span style="color:var(--text3)">🔍</span>
+        <input type="text" id="searchQ" placeholder="Search channels…" oninput="renderChannels()">
+      </div>
+    </div>
+
+    <!-- HERO -->
+    <div class="hero" id="heroBox">
+      <div class="hero-glow"></div>
+      <div class="hero-badge">● LIVE NOW</div>
+      <div class="hero-info">
+        <div class="hero-cat" id="heroCat">LIVE TV</div>
+        <div class="hero-title" id="heroTitle">Welcome to StreamZone</div>
+        <div class="hero-desc" id="heroDesc">Select a channel to start watching</div>
+        <button class="btn-watch" onclick="watchFirst()">▶ Watch Now</button>
+      </div>
+    </div>
+
+    <div class="sec-label" id="secLabel">All Channels</div>
+    <div class="ch-grid" id="chGrid"></div>
+
+    <!-- MID AD -->
+    <div class="mid-ad" id="adMid"></div>
+  </main>
+</div>
+
+<!-- PLAYER OVERLAY -->
+<div class="overlay" id="overlay">
+  <div class="player-wrap">
+    <div class="player-head">
+      <div class="player-ch-name" id="playerChName"></div>
+      <button class="btn-close-player" onclick="closePlayer()">✕ Close</button>
+    </div>
+    <div class="player-box" id="playerBox"><span>📡</span></div>
+    <div class="player-below-ad hidden" id="adPlayer"></div>
+    <div class="player-note">Stream not loading? Try a different browser or check the URL in Admin.</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.12/hls.min.js"></script>
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────
+const CATS=['all','news','sports','cartoon','movies','drama','music'];
+const ICONS={news:'📰',sports:'⚽',cartoon:'🧸',movies:'🎬',drama:'🎭',music:'🎵'};
+const DEFAULT_CHANNELS=[
+  {id:1,name:'BBC News',cat:'news',icon:'🇬🇧',url:'https://vs-hls-push-ww-live.akamaized.net/x=4/i=urn:bbc:pmd:pid:bbc_news_channel_hd/pc_hd_abr_v2.m3u8',now:'World News Live'},
+  {id:2,name:'Al Jazeera English',cat:'news',icon:'📡',url:'https://live-hls-web-aje.getaj.net/AJE/index.m3u8',now:'Breaking News'},
+  {id:3,name:'Sports HD',cat:'sports',icon:'⚽',url:'',now:'Live Match'},
+  {id:4,name:'ESPN Live',cat:'sports',icon:'🏆',url:'',now:'Sports Highlights'},
+  {id:5,name:'Cartoon Network',cat:'cartoon',icon:'🧸',url:'',now:'Tom & Jerry'},
+  {id:6,name:'Disney Channel',cat:'cartoon',icon:'🏰',url:'',now:'Mickey Mouse'},
+  {id:7,name:'Cinema Max',cat:'movies',icon:'🎬',url:'',now:'Action Night'},
+  {id:8,name:'Star Movies',cat:'movies',icon:'⭐',url:'',now:'Hollywood Hits'},
+  {id:9,name:'Star Plus',cat:'drama',icon:'🎭',url:'',now:'Evening Drama'},
+  {id:10,name:'Zee TV',cat:'drama',icon:'📺',url:'',now:'Popular Series'},
+  {id:11,name:'MTV',cat:'music',icon:'🎵',url:'',now:'Top 40 Hits'},
+  {id:12,name:'Music Asia',cat:'music',icon:'🎤',url:'',now:'Asian Hits'},
+];
+
+function getCh(){
+  const s=localStorage.getItem('sz_channels');
+  return s?JSON.parse(s):DEFAULT_CHANNELS;
+}
+function getAds(){
+  const s=localStorage.getItem('sz_ads');
+  return s?JSON.parse(s):{
+    enabled:false,pubId:'',
+    top:{enabled:false,slot:'',code:''},
+    sidebar:{enabled:false,slot:'',code:''},
+    mid:{enabled:false,slot:'',code:''},
+    player:{enabled:false,slot:'',code:''},
+  };
+}
+function getSettings(){
+  const s=localStorage.getItem('sz_settings');
+  return s?JSON.parse(s):{siteName:'StreamZone',logo:'StreamZone'};
+}
+
+// ── APPLY SETTINGS ─────────────────────────────────────────────────────
+function applySettings(){
+  const st=getSettings();
+  document.getElementById('siteTitle').textContent=(st.siteName||'StreamZone')+' — Live TV';
+  const lg=document.getElementById('logoText');
+  const n=st.siteName||'StreamZone';
+  lg.innerHTML=n.slice(0,-2)+'<span>'+n.slice(-2)+'</span>';
+}
+
+// ── APPLY ADS ──────────────────────────────────────────────────────────
+function applyAds(){
+  const ads=getAds();
+  injectAd('adTop',ads.top,ads.pubId);
+  injectAd('adSidebar',ads.sidebar,ads.pubId);
+  injectAd('adMid',ads.mid,ads.pubId);
+  injectAd('adPlayer',ads.player,ads.pubId);
+}
+function injectAd(elId,zone,pubId){
+  const el=document.getElementById(elId);
+  if(!el)return;
+  if(zone&&zone.enabled&&zone.code){
+    el.innerHTML=zone.code;
+    el.classList.remove('hidden');
+  } else if(zone&&zone.enabled&&zone.slot&&pubId){
+    el.innerHTML=`<ins class="adsbygoogle" style="display:block;min-height:90px;width:100%;" data-ad-client="${pubId}" data-ad-slot="${zone.slot}"></ins>`;
+    el.classList.remove('hidden');
+    if(window.adsbygoogle){window.adsbygoogle.push({});}
+  } else {
+    el.classList.add('hidden');
+  }
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────
+let currentCat='all';
+let playingId=null;
+
+function filterCat(cat,btn){
+  currentCat=cat;
+  document.querySelectorAll('.tab,.cat-row').forEach(b=>b.classList.remove('on','active'));
+  if(btn){btn.classList.add(btn.classList.contains('tab')?'on':'active');}
+  renderChannels();
+}
+
+function renderChannels(){
+  const channels=getCh();
+  const q=(document.getElementById('searchQ').value||'').toLowerCase();
+  const filtered=channels.filter(c=>{
+    const mc=currentCat==='all'||c.cat===currentCat;
+    const mq=!q||c.name.toLowerCase().includes(q)||(c.now||'').toLowerCase().includes(q);
+    return mc&&mq;
+  });
+
+  // counts
+  CATS.forEach(cat=>{
+    const el=document.getElementById('sc-'+cat);
+    if(el)el.textContent=cat==='all'?channels.length:channels.filter(c=>c.cat===cat).length;
+  });
+
+  // hero
+  if(channels.length){
+    const h=channels[0];
+    document.getElementById('heroCat').textContent=(ICONS[h.cat]||'📺')+' '+( h.cat||'LIVE').toUpperCase();
+    document.getElementById('heroTitle').textContent=h.name;
+    document.getElementById('heroDesc').textContent='▶ Now Playing: '+(h.now||'Live Stream');
+  }
+
+  // label
+  const labels={all:'All Channels',news:'📰 News Channels',sports:'⚽ Sports Channels',cartoon:'🧸 Cartoon Channels',movies:'🎬 Movie Channels',drama:'🎭 Drama Channels',music:'🎵 Music Channels'};
+  document.getElementById('secLabel').textContent=labels[currentCat]||'Channels';
+
+  const grid=document.getElementById('chGrid');
+  if(!filtered.length){
+    grid.innerHTML='<div style="color:var(--text3);font-size:.88rem;grid-column:1/-1;padding:30px 0;text-align:center">No channels found.</div>';
+    return;
+  }
+  grid.innerHTML=filtered.map(c=>`
+    <div class="ch-card${c.id===playingId?' now-playing':''}" onclick="openPlayer(${c.id})">
+      <div class="ch-thumb">
+        ${c.logo?`<img src="${esc(c.logo)}" onerror="this.style.display='none'" alt="">`:''}
+        <span style="${c.logo?'display:none':''}">${c.icon||ICONS[c.cat]||'📺'}</span>
+        <div class="live-pip">LIVE</div>
+      </div>
+      <div class="ch-body">
+        <div class="ch-name">${esc(c.name)}</div>
+        <div class="ch-now">${esc(c.now||'Live')}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function watchFirst(){
+  const ch=getCh();
+  if(ch.length)openPlayer(ch[0].id);
+}
+
+// ── PLAYER ───────────────────────────────────────────────────────────
+let hlsInstance=null;
+function openPlayer(id){
+  const ch=getCh();
+  const c=ch.find(x=>x.id===id);
+  if(!c)return;
+  playingId=id;
+  renderChannels();
+  document.getElementById('playerChName').textContent=(c.icon||'📺')+' '+c.name;
+  const box=document.getElementById('playerBox');
+  if(hlsInstance){hlsInstance.destroy();hlsInstance=null;}
+
+  if(c.url&&c.url.match(/\.m3u8/i)){
+    box.innerHTML='<video id="lv" controls autoplay playsinline></video>';
+    const v=document.getElementById('lv');
+    if(Hls.isSupported()){
+      hlsInstance=new Hls({enableWorker:true});
+      hlsInstance.loadSource(c.url);
+      hlsInstance.attachMedia(v);
+      hlsInstance.on(Hls.Events.MANIFEST_PARSED,()=>v.play().catch(()=>{}));
+    } else if(v.canPlayType('application/vnd.apple.mpegurl')){
+      v.src=c.url;v.play().catch(()=>{});
+    } else {
+      box.innerHTML='<div style="color:var(--text2);text-align:center;padding:30px">⚠️ HLS not supported in this browser.</div>';
+    }
+  } else if(c.url&&c.url.startsWith('http')){
+    box.innerHTML=`<iframe src="${esc(c.url)}" allowfullscreen allow="autoplay;encrypted-media"></iframe>`;
+  } else {
+    box.innerHTML='<div style="color:var(--text2);text-align:center;padding:30px;line-height:1.8">📡 No stream URL set.<br><small>Add one in the Admin Panel.</small></div>';
+  }
+  document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closePlayer(){
+  if(hlsInstance){hlsInstance.destroy();hlsInstance=null;}
+  document.getElementById('playerBox').innerHTML='<span>📡</span>';
+  document.getElementById('overlay').classList.remove('open');
+  document.body.style.overflow='';
+  playingId=null;
+  renderChannels();
+}
+document.getElementById('overlay').addEventListener('click',function(e){
+  if(e.target===this)closePlayer();
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closePlayer();});
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ── INIT ──────────────────────────────────────────────────────────────
+applySettings();
+applyAds();
+renderChannels();
+</script>
+</body>
+</html>
